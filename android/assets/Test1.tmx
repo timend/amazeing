@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" nextobjectid="11">
+ <tileset firstgid="1" name="Basic" tilewidth="32" tileheight="32">
+  <image source="AMazeingTileset.png" width="32" height="64"/>
+ </tileset>
+ <layer name="Kachelebene 1" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt3TESwiAUBFDM/Q9tq060EBj2wyteaYb9m6TAEa/W2vXiUcjV6q79W4aqOe5yrV7DqG5Wr0Mfv/u4e4ZWO6WPWdlGzmeHWfdk10eO1D5O7yThGjOvV0lv9hn3sz6yZqePrNnpo+/z3ld7Z09cU5Xsno+87KM70Yc+UnhfZenJPmtvQx9Zc9NH1tz0kTW7U/sY8f7Xx/g+Eq2eDe/3yeo1AAAAAACcxt5sFn1k0UfW/PWxvg/fweYy9yz6yKKPLPoAAAAAAAAAAAAAAAAAoIpdfhMnRxY5suyQY6ezHqqeX+HsjUz6AAAAANjXyD0f+0dZM0y9ViX/7Ium/o9w1Q4/sz4BY2IoBA==
+  </data>
+ </layer>
+ <objectgroup name="Objektebene 1">
+  <object id="7" name="startPos" x="553.333" y="381.333" width="32" height="32"/>
+ </objectgroup>
+</map>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="128" tileheight="128" nextobjectid="3">
+ <tileset firstgid="1" name="TilesetTest2" tilewidth="128" tileheight="128">
+  <image source="AMazeingTileset128px.png" width="128" height="256"/>
+ </tileset>
+ <layer name="Kachelebene 1" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2cGSozAMBNBM/v+j55pyAZalltSi+qDa2VknyP0wGPb7+Xy+Kqr6W35W9ZQ8uEoeXHXlIRMej98/VTweMuHxWH9+Y1n3nEwe00w8e/yT7+r0mGRSkVmVzZPH3e/YqrrHTBd5YLKr8mAvlnuvPHp77rpeMddVJhVzyFyT0z0sv0Pm1L2/Yq47j8xresWcJno8ZYTOrzKXyR5VGWp9YDwmrpHJHpUm8uAykQcuJ4RJ1T3kDR6VJowebG5VJvLgMqm4Zr3F4y0mVR4d738mmlR4rP2/xWSyBzKLk3llPZ9k9e/1QIyt3K9k9JFhkumxG1f1jHVlg+oDPQfv86DVAzEmwwWZK4sH4tzv8kCaINeI12M3nv1Z5ule4smXxSN6j/SsyatCeXjzRa2RiMdTH1l7NVQWGXsNhEnU4/c7vOctYpznmFkm3R7RvpBu1vPhu4xH5RtdI1keGXbebNaMdn+P5isPv83Vv0dNImtkmkd2j0iTt3tUm6zH8ewXpnqwmdwdJ9uEwcNz7KpeESbyqDPZ9RFZ+1M8qq5XlmNan4kmeljPNab7HHqNsHised9VZ39Rk2keU8pjYj2f5IE3uctRHjUmVy4oD5br9KSyXrtOPU4+p9pniNqLyQNncjVOHj0mqH2YPGImkXzlYcv45H3VLmN5xC2e8trluWYqD4zFicndZ3T/wFpYMnp6HpQH3mI3JvJuUR7nee5MomtLHvYsrdl61488YnOP7rXkUeeBMpTH2fjT65s88jxOTfQ+Md/j5HPy4PGwjjl9J/zminh49lrWcfLAmiCeMbuzmeZxlSdq/yWPuInnui8PrnnLg2ve8uCatzy45i0PrnnLg2ve8uCat96XzPDozkUePD0xZdHdA0NPnVkw9LB6dPfEkANLH9b/v/JU91x38+ruYfV42vtGc2U2Yept9bhzeNu8M+Y3zWP9zs4s2Bw8HhlZdviwWuw87lwy55a9N2C2sHrs5lE9v8gej9nC6jF5ftNq56HMeTxk0e+haxGPh6q/5MFV0b2jCl///Isrew==
+  </data>
+ </layer>
+ <objectgroup name="Objektebene 1">
+  <object id="2" name="playerStart" x="304" y="7056" width="16" height="80"/>
+ </objectgroup>
+</map>
