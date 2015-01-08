@@ -28,19 +28,20 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
     TiledMap tiledMap;
     OrthographicCamera camera;
     OrthogonalTiledMapRendererWithSprites tiledMapRenderer;
-
+    float playerVelocity;
     int oldx,oldy;
     boolean firsttouch, playerMove;
     float w,h, maxScrollX, maxScrollY;
     Sprite playerSprite;
     int tileWidth,tileHeight,tiledMapWidth,tiledMapHeight;
+    Texture texture;
     @Override
     public void create () {
         tileWidth=64;
         tileHeight=64;
         tiledMapHeight = 100;
         tiledMapWidth = 100;
-
+        playerVelocity = 0.2f;
         Texture tiles = new Texture(Gdx.files.internal("AMazeingTileset.png"));
         TextureRegion[][] splitTiles = TextureRegion.split(tiles, tileWidth, tileHeight);
         StaticTiledMapTile wall = new StaticTiledMapTile(splitTiles[1][0]);
@@ -67,12 +68,11 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
         tiledMap.getLayers().get(0).setVisible(true);
         maxScrollX = w - (getTileWidth() *tiledMapWidth);
         maxScrollY = h - (tileHeight*tiledMapHeight);
-        Texture texture = new Texture(Gdx.files.internal("PlayerSprite.png"));
+        texture = new Texture(Gdx.files.internal("PlayerSprite.png"));
         playerSprite = new Sprite(texture);
         tiledMapRenderer.addSprite(playerSprite);
-
         //MapProperties startPos = tiledMap.getLayers().get(1).getObjects().get("startPos").getProperties();
-        playerSprite.setPosition(/*(Float)startPos.get("x")*/ 0  ,/*(Float)startPos.get("y")*/ 0 );
+        playerSprite.setPosition(/*(Float)startPos.get("x")*/ tileWidth  ,/*(Float)startPos.get("y")*/ tileHeight );
     }
 
     @Override
@@ -105,7 +105,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         Vector3 screen = camera.unproject(new Vector3 (screenX,screenY,0));
         firsttouch = true;
-        if ((new Vector2(screen.x,screen.y).dst(playerSprite.getX(),playerSprite.getY())) < 100) {
+        if ((new Vector2(screen.x,screen.y).dst(playerSprite.getX(),playerSprite.getY())) < 150) {
             playerMove = true;
 
         }
@@ -124,22 +124,30 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
         if (!firsttouch) {
             if (playerMove) {
                 TiledMapTileLayer layer = (TiledMapTileLayer)tiledMap.getLayers().get(0);
-                int playerDestY = (int) (screen.y / getTileWidth());
-                int playerDestX = (int) (screen.x / getTileWidth());
-                int playerX = (int) playerSprite.getX()/ getTileWidth();
-                int playerY = (int) playerSprite.getY()/ getTileWidth();
+                int playerDestY = (int) (screen.y);
+                int playerDestX = (int) (screen.x);
+                int playerX = (int) playerSprite.getX();
+                int playerY = (int) playerSprite.getY();
+                int moveRoundCounter;
+                moveRoundCounter = 0;
                 while (playerX != playerDestX || playerY != playerDestY)
                 {
                     playerX+= Math.signum(playerDestX - playerX);
                     playerY+= Math.signum(playerDestY - playerY);
 
-                    if (isBlocked(layer, playerY, playerX))
+                    if (isBlocked(layer, playerY, playerX)||
+                        isBlocked(layer, (playerY+texture.getWidth()), playerX)||
+                        isBlocked(layer, playerY, (playerX+texture.getWidth()))||
+                        isBlocked(layer, playerY+texture.getHeight(), (playerX+texture.getWidth()))||
+                                 (moveRoundCounter>playerVelocity/Gdx.graphics.getDeltaTime()))
                     {
+
                             break;
                     }
                     else
                     {
-                        playerSprite.setPosition(playerX* getTileWidth(), playerY* getTileWidth());
+                        playerSprite.setPosition(playerX, playerY);
+                        moveRoundCounter++;
                     }
                 }
 
@@ -184,6 +192,8 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
     }
 
     private boolean isBlocked(TiledMapTileLayer layer, int y, int x) {
+        x/=tileHeight;
+        y/=tileWidth;
         if (layer.getCell(x, y) == null) return true;
         return layer.getCell(x, y).getTile().getId() == 2;
     }
