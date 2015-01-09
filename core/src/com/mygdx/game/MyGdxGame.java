@@ -2,12 +2,14 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTile;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
@@ -15,7 +17,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 
-public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
+public class MyGdxGame extends ApplicationAdapter implements InputProcessor, GestureDetector.GestureListener {
     public static final String BLOCKING_PROPERTY = "wall";
     TiledMap tiledMap;
     OrthographicCamera camera;
@@ -23,17 +25,19 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
     float playerVelocity;
     int oldx,oldy;
     boolean firsttouch, playerMove;
-    float w,h, maxScrollX, maxScrollY;
+    float screenWidth, screenHeight, minZoom;
     Sprite playerSprite;
     int tileWidth,tileHeight,tiledMapWidth,tiledMapHeight;
     Texture texture;
     TiledMapTile[] wallTiles;
+    float zoomSensitivity = 0.5f;
+
     @Override
     public void create () {
         tileWidth=64;
         tileHeight=64;
-        tiledMapHeight = 101;
-        tiledMapWidth = 101;
+        tiledMapHeight = 51;
+        tiledMapWidth = 51;
         playerVelocity = 0.2f;
         wallTiles = new TiledMapTile[16];
         Texture tiles = new Texture(Gdx.files.internal("AMazeingTileset.png"));
@@ -50,10 +54,10 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
         }
         StaticTiledMapTile empty = new StaticTiledMapTile(splitTiles[0][0]);
         empty.setId(1);
-        w = Gdx.graphics.getWidth();
-        h = Gdx.graphics.getHeight();
+        screenWidth = Gdx.graphics.getWidth();
+        screenHeight = Gdx.graphics.getHeight();
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, w, h);
+        camera.setToOrtho(false, screenWidth, screenHeight);
         camera.update();
         //tiledMap = new TmxMapLoader().load("TilesetTest2.tmx");
         MazeGenerator mazeGenerator = new MazeGenerator(tiledMapWidth,tiledMapHeight,empty,wallTiles);
@@ -62,10 +66,11 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
         mazeGenerator.fillMapLayer(layer);
         tiledMap.getLayers().add(layer);
         tiledMapRenderer = new OrthogonalTiledMapRendererWithSprites(tiledMap);
-        Gdx.input.setInputProcessor(this);
+        GestureDetector gestureDetector = new GestureDetector(this);
+        Gdx.input.setInputProcessor(new InputMultiplexer(gestureDetector, this));
         tiledMap.getLayers().get(0).setVisible(true);
-        maxScrollX = w - (getTileWidth() *tiledMapWidth);
-        maxScrollY = h - (tileHeight*tiledMapHeight);
+        minZoom = Math.min(((float) getTileWidth() * tiledMapWidth / (float) screenWidth),
+                ((float) tileHeight * tiledMapHeight / (float) screenHeight));
         texture = new Texture(Gdx.files.internal("PlayerSprite.png"));
         playerSprite = new Sprite(texture);
         tiledMapRenderer.addSprite(playerSprite);
@@ -154,36 +159,39 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
                     moveRoundCounter++;
                 }
                 playerSprite.setPosition(playerX, playerY);
-                if (playerSprite.getX()<camera.position.x-camera.viewportWidth/2+(w/10) ){
-                    camera.translate(-50,0);
+                if (playerSprite.getX()<camera.position.x-camera.viewportWidth/2+(screenWidth /10) ){
+                    camera.translate(-10,0);
 
                 }
-                if (playerSprite.getX()>camera.position.x-camera.viewportWidth/2+((w/20)*18)){
-                    camera.translate(50,0);
+                if (playerSprite.getX()>camera.position.x-camera.viewportWidth/2+((screenWidth /20)*18)){
+                    camera.translate(10,0);
                 }
-                if (playerSprite.getY()<camera.position.y-camera.viewportHeight/2+(h/10) ){
-                    camera.translate(0,-50);
+                if (playerSprite.getY()<camera.position.y-camera.viewportHeight/2+(screenHeight /10) ){
+                    camera.translate(0,-10);
                 }
-                if (playerSprite.getY()>camera.position.y-camera.viewportHeight/2+((h/20)*18)){
-                    camera.translate(0,50);
+                if (playerSprite.getY()>camera.position.y-camera.viewportHeight/2+((screenHeight /20)*18)){
+                    camera.translate(0,10);
                 }
             }
             else {
-                camera.translate(-(screenX - oldx), (screenY - oldy));
+                camera.translate(-(screenX - oldx)*camera.zoom, (screenY - oldy)*camera.zoom);
 
 
 
             }
-            Vector3 translation = camera.position;
-            translation.x = Math.max(w / 2, translation.x);
-            translation.y = Math.max(h / 2, translation.y);
-
-            translation.x = Math.min(-maxScrollX + w / 2, translation.x);
-            translation.y = Math.min(-maxScrollY + h / 2, translation.y);
+            limitCameraPanning();
         }
             else firsttouch = false;
         oldx = screenX;oldy = screenY;
         return false;
+    }
+
+    private void limitCameraPanning() {
+        Vector3 translation = camera.position;
+        translation.x = Math.max(screenWidth / 2 * camera.zoom, translation.x);
+        translation.y = Math.max(screenHeight / 2 * camera.zoom, translation.y);
+        translation.x = Math.min(tileWidth * tiledMapWidth - screenWidth / 2 * camera.zoom, translation.x);
+        translation.y = Math.min(tileHeight * tiledMapHeight - screenHeight / 2 * camera.zoom, translation.y);
     }
 
     private boolean isPlayerBlocked(TiledMapTileLayer layer, int playerX, int playerY) {
@@ -213,4 +221,51 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
     public boolean scrolled(int amount) {
         return false;
     }
+
+    @Override
+    public boolean touchDown(float x, float y, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean tap(float x, float y, int count, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean longPress(float x, float y) {
+        return false;
+    }
+
+    @Override
+    public boolean fling(float velocityX, float velocityY, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean pan(float x, float y, float deltaX, float deltaY) {
+        return false;
+    }
+
+    @Override
+    public boolean panStop(float x, float y, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean zoom(float initialDistance, float distance) {
+        camera.zoom *=  initialDistance / distance;
+        camera.zoom = Math.max(camera.zoom, 1);
+        camera.zoom = Math.min(camera.zoom, minZoom);
+        Gdx.app.log("Zoom", "Zoomed to level " + camera.zoom);
+        limitCameraPanning();
+        return true;
+    }
+
+    @Override
+    public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2, Vector2 pointer1, Vector2 pointer2) {
+        return false;
+    }
+
+
 }
