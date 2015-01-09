@@ -128,44 +128,45 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
                 int playerY = (int) playerSprite.getY();
                 int moveRoundCounter;
                 moveRoundCounter = 0;
-                while (playerX != playerDestX || playerY != playerDestY)
+                while ((playerX != playerDestX || playerY != playerDestY) &&
+                        !(moveRoundCounter > playerVelocity / Gdx.graphics.getDeltaTime()))
                 {
-                    playerX+= Math.signum(playerDestX - playerX);
-                    playerY+= Math.signum(playerDestY - playerY);
+                    int dx = (int)Math.signum(playerDestX - playerX);
+                    int dy = (int)Math.signum(playerDestY - playerY);
 
-                    if (isBlocked(layer, playerY, playerX)||
-                        isBlocked(layer, (playerY+texture.getWidth()), playerX)||
-                        isBlocked(layer, playerY, (playerX+texture.getWidth()))||
-                        isBlocked(layer, playerY+texture.getHeight(), (playerX+texture.getWidth()))||
-                                 (moveRoundCounter>playerVelocity/Gdx.graphics.getDeltaTime()))
+                    if (!isPlayerBlocked(layer, playerX + dx, playerY + dy))
                     {
-
-                            break;
+                        playerX += dx;
+                        playerY += dy;
+                    }
+                    else if (!isPlayerBlocked(layer, playerX, playerY + dy))
+                    {
+                        playerY += dy;
+                    }
+                    else if (!isPlayerBlocked(layer, playerX + dx, playerY))
+                    {
+                        playerX += dx;
                     }
                     else
                     {
-                        playerSprite.setPosition(playerX, playerY);
-                        moveRoundCounter++;
+                        break;
                     }
+                    moveRoundCounter++;
                 }
+                playerSprite.setPosition(playerX, playerY);
+                if (playerSprite.getX()<camera.position.x-camera.viewportWidth/2+(w/10) ){
+                    camera.translate(-50,0);
 
-
-            if (playerSprite.getX()<camera.position.x-camera.viewportWidth/2+(w/10) ){
-                camera.translate(-50,0);
-
-            }
-            if (playerSprite.getX()>camera.position.x-camera.viewportWidth/2+((w/20)*18)){
-                camera.translate(50,0);
-            }
-            if (playerSprite.getY()<camera.position.y-camera.viewportHeight/2+(h/10) ){
-                camera.translate(0,-50);
-            }
-            if (playerSprite.getY()>camera.position.y-camera.viewportHeight/2+((h/20)*18)){
-                camera.translate(0,50);
-            }
-
-
-
+                }
+                if (playerSprite.getX()>camera.position.x-camera.viewportWidth/2+((w/20)*18)){
+                    camera.translate(50,0);
+                }
+                if (playerSprite.getY()<camera.position.y-camera.viewportHeight/2+(h/10) ){
+                    camera.translate(0,-50);
+                }
+                if (playerSprite.getY()>camera.position.y-camera.viewportHeight/2+((h/20)*18)){
+                    camera.translate(0,50);
+                }
             }
             else {
                 camera.translate(-(screenX - oldx), (screenY - oldy));
@@ -185,11 +186,18 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
         return false;
     }
 
+    private boolean isPlayerBlocked(TiledMapTileLayer layer, int playerX, int playerY) {
+        return isBlocked(layer, playerX, playerY) ||
+                isBlocked(layer, playerX, (playerY + texture.getWidth())) ||
+                isBlocked(layer, (playerX + texture.getWidth()), playerY) ||
+                isBlocked(layer, (playerX + texture.getWidth()), playerY + texture.getHeight());
+    }
+
     private Integer getTileWidth() {
         return tileWidth;
     }
 
-    private boolean isBlocked(TiledMapTileLayer layer, int y, int x) {
+    private boolean isBlocked(TiledMapTileLayer layer, int x, int y) {
         x/=tileHeight;
         y/=tileWidth;
         if (layer.getCell(x, y) == null) return true;
