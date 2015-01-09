@@ -8,23 +8,15 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMapTile;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
-import  com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
-
-import javax.swing.CellEditor;
-
-import javafx.scene.control.Cell;
 
 public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
+    public static final String BLOCKING_PROPERTY = "wall";
     TiledMap tiledMap;
     OrthographicCamera camera;
     OrthogonalTiledMapRendererWithSprites tiledMapRenderer;
@@ -35,30 +27,36 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
     Sprite playerSprite;
     int tileWidth,tileHeight,tiledMapWidth,tiledMapHeight;
     Texture texture;
+    TiledMapTile[] wallTiles;
     @Override
     public void create () {
         tileWidth=64;
         tileHeight=64;
-        tiledMapHeight = 100;
-        tiledMapWidth = 100;
+        tiledMapHeight = 101;
+        tiledMapWidth = 101;
         playerVelocity = 0.2f;
+        wallTiles = new TiledMapTile[16];
         Texture tiles = new Texture(Gdx.files.internal("AMazeingTileset.png"));
         TextureRegion[][] splitTiles = TextureRegion.split(tiles, tileWidth, tileHeight);
-        StaticTiledMapTile wall = new StaticTiledMapTile(splitTiles[1][0]);
-        wall.setId(2);
+        int[] colDirections={0, Direction.E.bit,Direction.S.bit, Direction.E.bit|Direction.S.bit};
+        int[] rowDirections={0, Direction.W.bit,Direction.N.bit, Direction.W.bit|Direction.N.bit};
+        for (int i = 0;i<4;i++){
+            for (int i2 = 0; i2<4;i2++){
+                TiledMapTile tile = new StaticTiledMapTile(splitTiles[i][i2]);
+                tile.getProperties().put(BLOCKING_PROPERTY,true);
+                wallTiles[rowDirections[i]|colDirections[i2]] =tile;
+            }
+
+        }
         StaticTiledMapTile empty = new StaticTiledMapTile(splitTiles[0][0]);
         empty.setId(1);
-        StaticTiledMapTile blue = new StaticTiledMapTile(splitTiles[0][1]);
-        blue.setId(3);
-        StaticTiledMapTile green = new StaticTiledMapTile(splitTiles[1][1]);
-        green.setId(4);
         w = Gdx.graphics.getWidth();
         h = Gdx.graphics.getHeight();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, w, h);
         camera.update();
         //tiledMap = new TmxMapLoader().load("TilesetTest2.tmx");
-        MazeGenerator mazeGenerator = new MazeGenerator(tiledMapWidth,tiledMapHeight,wall,empty,green,blue);
+        MazeGenerator mazeGenerator = new MazeGenerator(tiledMapWidth,tiledMapHeight,empty,wallTiles);
         tiledMap = new TiledMap();
         TiledMapTileLayer layer = new TiledMapTileLayer(tiledMapWidth,tiledMapHeight,tileWidth,tileHeight);
         mazeGenerator.fillMapLayer(layer);
@@ -195,7 +193,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor {
         x/=tileHeight;
         y/=tileWidth;
         if (layer.getCell(x, y) == null) return true;
-        return layer.getCell(x, y).getTile().getId() == 2;
+        return layer.getCell(x, y).getTile().getProperties().containsKey(BLOCKING_PROPERTY);
     }
 
     @Override
