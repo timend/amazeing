@@ -50,7 +50,6 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor, Ges
                 tile.getProperties().put(BLOCKING_PROPERTY,true);
                 wallTiles[rowDirections[i]|colDirections[i2]] =tile;
             }
-
         }
         StaticTiledMapTile empty = new StaticTiledMapTile(splitTiles[0][0]);
         empty.setId(1);
@@ -69,8 +68,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor, Ges
         GestureDetector gestureDetector = new GestureDetector(this);
         Gdx.input.setInputProcessor(new InputMultiplexer(gestureDetector, this));
         tiledMap.getLayers().get(0).setVisible(true);
-        minZoom = Math.min(((float) getTileWidth() * tiledMapWidth / (float) screenWidth),
-                ((float) tileHeight * tiledMapHeight / (float) screenHeight));
+        minZoom = Math.max(((float) getTileWidth() * tiledMapWidth / (float) screenWidth),((float) tileHeight * tiledMapHeight / (float) screenHeight));
         texture = new Texture(Gdx.files.internal("PlayerSprite.png"));
         playerSprite = new Sprite(texture);
         tiledMapRenderer.addSprite(playerSprite);
@@ -80,7 +78,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor, Ges
 
     @Override
     public void render () {
-        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.update();
@@ -188,10 +186,30 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor, Ges
 
     private void limitCameraPanning() {
         Vector3 translation = camera.position;
-        translation.x = Math.max(screenWidth / 2 * camera.zoom, translation.x);
-        translation.y = Math.max(screenHeight / 2 * camera.zoom, translation.y);
-        translation.x = Math.min(tileWidth * tiledMapWidth - screenWidth / 2 * camera.zoom, translation.x);
-        translation.y = Math.min(tileHeight * tiledMapHeight - screenHeight / 2 * camera.zoom, translation.y);
+        float minX = screenWidth / 2 * camera.zoom;
+        float minY = screenHeight / 2 * camera.zoom;
+        float maxX = tileWidth * tiledMapWidth - screenWidth / 2 * camera.zoom;
+        float maxY = tileHeight * tiledMapHeight - screenHeight / 2 * camera.zoom;
+
+        if (minX >= maxX)
+        {
+            translation.x = tileWidth * tiledMapWidth / 2;
+        }
+        else
+        {
+            translation.x = Math.max(minX, translation.x);
+            translation.x = Math.min(maxX, translation.x);
+        }
+
+        if (minY >= maxY)
+        {
+            translation.y = tileHeight * tiledMapHeight / 2;
+        }
+        else
+        {
+            translation.y = Math.max(minY, translation.y);
+            translation.y = Math.min(maxY, translation.y);
+        }
     }
 
     private boolean isPlayerBlocked(TiledMapTileLayer layer, int playerX, int playerY) {
@@ -255,6 +273,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor, Ges
     @Override
     public boolean zoom(float initialDistance, float distance) {
         camera.zoom *=  initialDistance / distance;
+        camera.position.set(playerSprite.getX(), playerSprite.getY(), 0);
         camera.zoom = Math.max(camera.zoom, 1);
         camera.zoom = Math.min(camera.zoom, minZoom);
         Gdx.app.log("Zoom", "Zoomed to level " + camera.zoom);
