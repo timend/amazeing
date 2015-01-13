@@ -3,6 +3,8 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.maps.tiled.TiledMapTile;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.tiles.AnimatedTiledMapTile;
+import com.badlogic.gdx.math.Vector2;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,22 +17,25 @@ public class MazeGenerator {
     private final int heightInMazeCells;
     private final int[][] maze;
     private TiledMapTile empty;
-    private TiledMapTile wallTiles[];
+    private TiledMapTile[] wallTiles;
+    private TiledMapTile goalTile;
     private boolean[][] isWall;
-
-
-    public MazeGenerator(int width, int height,TiledMapTile empty,TiledMapTile[] wallTiles) {
+    private int distanceToGoal, goalX, goalY;
+    private int currentMarkedPositionX, currentMarkedPositionY, longestDistanceFromStart;
+    private boolean goalSet = false;
+    public MazeGenerator(int width, int height,TiledMapTile empty,TiledMapTile[] wallTiles,TiledMapTile goalTile,int distanceToGoal) {
         widthInTiles = width;
         heightInTiles = height;
         isWall = new boolean[widthInTiles][heightInTiles];
         widthInMazeCells = (width - 1)/2;
         heightInMazeCells = (height - 1)/2;
-
+        this.distanceToGoal = distanceToGoal;
         maze = new int[widthInMazeCells][heightInMazeCells];
         generateMaze(0, 0);
         this.empty = empty;
         this.wallTiles = wallTiles;
-
+        this.goalTile = goalTile;
+        longestDistanceFromStart = 0;
     }
 
     static class GenerateMazeCall {
@@ -38,25 +43,50 @@ public class MazeGenerator {
         int cx;
         int cy;
         int currentDir;
-
-        GenerateMazeCall(int cx, int cy)
+        int distanceFromStart;
+        GenerateMazeCall(int cx, int cy, int distanceFromStart)
         {
             this.cx = cx;
             this.cy = cy;
-
+            this.distanceFromStart = distanceFromStart;
             dirs = Direction.values();
             Collections.shuffle(Arrays.asList(dirs));
 
             currentDir = 0;
         }
     }
+    public Vector2 getGoalPosition()
+    {
+        if(goalSet) {
+            return (new Vector2(goalX * 2 + 1, goalY * 2 + 1));
+        }
+        else
+        {
+            return (new Vector2(currentMarkedPositionX * 2 +1, currentMarkedPositionY *2 + 1));
+        }
+    }
+
 
     private void generateMaze(int cx, int cy) {
         Stack<GenerateMazeCall> stack = new Stack<GenerateMazeCall>();
-        stack.push(new GenerateMazeCall(cx, cy));
+        stack.push(new GenerateMazeCall(cx, cy, 0));
 
         while (!stack.isEmpty()) {
             GenerateMazeCall call = stack.peek();
+
+            if (!goalSet&&call.distanceFromStart==distanceToGoal) {
+                goalX = call.cx;
+                goalY = call.cy;
+                goalSet = true;
+            }
+
+            if(call.distanceFromStart > longestDistanceFromStart)
+            {
+                longestDistanceFromStart = call.distanceFromStart;
+                currentMarkedPositionX = call.cx;
+                currentMarkedPositionY = call.cy;
+
+            }
 
             Direction dir = call.dirs[call.currentDir];
 
@@ -71,14 +101,14 @@ public class MazeGenerator {
                     && (maze[nx][ny] == 0)) {
                 maze[call.cx][call.cy] |= dir.bit;
                 maze[nx][ny] |= dir.opposite.bit;
-                stack.push(new GenerateMazeCall(nx, ny));
+                stack.push(new GenerateMazeCall(nx, ny,call.distanceFromStart+1));
             }
 
             call.currentDir++;
         }
     }
 
-    private static boolean between(int v, int upper) {
+    public static boolean between(int v, int upper) {
         return (v >= 0) && (v < upper);
     }
 
@@ -154,6 +184,15 @@ public class MazeGenerator {
                 }
                 layer.setCell(x,y,cell);
             }
+        }
+        TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
+        cell.setTile(goalTile);
+        if(goalSet) {
+            layer.setCell(goalX * 2 + 1, goalY * 2 + 1, cell);
+        }
+        else
+        {
+            layer.setCell(currentMarkedPositionX * 2 +1, currentMarkedPositionY *2 + 1, cell );
         }
 
 
